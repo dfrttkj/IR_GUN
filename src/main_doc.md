@@ -1,8 +1,8 @@
-# Das Gewär
+# Das Gewehr
 
-Das Projekt "Das Gewähr" wurde ursprünglich von obias Moswitzer und John Ramsak initiiert. Später schlossen sich Karl Krumrei und Erik Praster dem Team an. Das Vorhaben wird freundlicherweise von Luca Hofbauer ([Autohaus Hofbauer](https://www.hofbauer.co.at/autohaus)) gesponsert.
+Das Projekt "Das Gewehr" wurde ursprünglich von Tobias Moswitzer und John Ramsak initiiert. Später schlossen sich Karl Krumrei und Erik Praster dem Team an. Das Vorhaben wird freundlicherweise von Luca Hofbauer ([Autohaus Hofbauer](https://www.hofbauer.co.at/autohaus)) gesponsert.
 
-Bei "Das Gewähr" handelt es sich um ein selbst entwickeltes Laser-Tag-System. Das Team baut die gesamte Hard- und Software auf Basis der folgenden Kernkomponenten auf:
+Bei "Das Gewehr" handelt es sich um ein selbst entwickeltes Laser-Tag-System. Das Team baut die gesamte Hard- und Software auf Basis der folgenden Kernkomponenten auf:
 
 - **Mikrocontroller**: ESP32-WROOM-32 (53.5 mm x 28.5 mm x 13.0 mm)
 
@@ -13,7 +13,7 @@ Bei "Das Gewähr" handelt es sich um ein selbst entwickeltes Laser-Tag-System. D
 Die passgenauen Gehäuse für die Elektronik werden mithilfe von 3D-Druckern gefertigt, um die Komponenten zu schützen und dem System ein professionelles Aussehen zu verleihen.
 
 ## Inhaltsverzeichnis
-- [**Beschreibung**](#das-gewär)
+- [**Beschreibung**](#das-gewehr)
 - [**Inhaltsverzeichnis**](#inhaltsverzeichnis)
 - [**Grundlegende Konzepte**](#grundlegende-konzepte)
     - [Die `setup()` und `loop()` Struktur](#grundlegende-konzepte)
@@ -35,19 +35,19 @@ Die passgenauen Gehäuse für die Elektronik werden mithilfe von 3D-Druckern gef
 
 Die Arduino-Umgebung, die hier für den ESP32 verwendet wird, hat eine Struktur, die durch zwei Hauptfunktionen definiert wird: `setup()` und `loop()`.
 
-- `void setup()`: dieser teil der Code wird **Genau Einmal** ausgefürht es wird verwendet um sahen zu initializieren.
+- `void setup()`: Dieser Teil des Codes wird **Genau Einmal** ausgeführt. Hier werden z.B. Variablen und Librarys initialisiert.
 
-- `void loop()`: das ist eine Endloss schleife das als die main loop dient hier wird die haupt logik ausgeführt.
+- `void loop()`: Das ist eine Endlosschleife die als Main-Loop dient. Hier wird die Hauptlogik ausgeführt.
 
-Ein weiterer wichtiger konzept sind **Datentypen**. In C++ musst du den Typ jeder Variable explizit deklarieren, z.B. int, uint16_t oder bool. Dies ermöglicht dem Compiler, den Code viel effizienter für die Hardware zu optimieren.
+Ein weiteres wichtiges Konzept sind **Datentypen**. In C++ muss man den Typ jeder Variable explizit deklarieren, z.B. int, uint16_t oder bool. Dies ermöglicht dem Compiler, den Code viel effizienter für die Hardware zu optimieren.
 
 - `uint16_t`: Ein vorzeichenloser 16-Bit-Integer (Wert von 0 bis 65.535). Wird hier für die `playerID` verwendet.
 
-- `uint8_t`: Ein vorzeichenloser 8-Bit-Integer (Wert von 0 bis 255). Wird für die `teamID` verwendet.
+- `uint8_t`: Ein vorzeichenloser 8-Bit-Integer (Wert von 0 bis 255). Wird hier für die `teamID` verwendet.
 
 ## Hardware-Konfiguration (I/O Pins)
 
-Dieser code deffiniert zuerst drei Konstanten, um die GPIO-Pins des ESP32 zu speichern
+Dieser Code definiert zuerst drei Konstanten, um die GPIO-Pins des ESP32 zu speichern
 
 ``` cpp
 const int irLedPin = 4;      // GPIO für die Sende-LED (Waffe)
@@ -55,7 +55,7 @@ const int irReceiverPin = 5; // GPIO für den Empfänger (Weste)
 const int triggerPin = 15;   // GPIO für den Abzug-Knopf
 ```
 
-Die `void setup()`-Funktion deffiniert wie diese pins verwendet werden:
+Die `void setup()`-Funktion definiert wie diese Pins verwendet werden:
 
 - `pinMode(irLedPin, OUTPUT);`
 - `pinMode(irReceiverPin, INPUT);`
@@ -69,7 +69,7 @@ Ein einfaches Ein- und Ausschalten der IR-LED würde nicht funktionieren, da der
 
 #### Pulsweitenmodulation (PWM) als Trägerfrequenz
 
-Der Code verwendet eine Technik namens Pulsweitenmodulation (PWM), um die IR-LED nicht einfach nur einzuschalten, sondern sie extrem schnell blinken zu lassen – genau in 38 kHz takt. Dies wird als Trägerfrequenz bezeichnet. Der IR-Empfänger ist speziell darauf ausgelegt, nur IR-Licht zu "sehen", das mit dieser Frequenz blinkt.
+Der Code verwendet eine Technik die Pulsweitenmodulation (PWM) genannt wird, um die IR-LED nicht einfach nur einzuschalten, sondern sie extrem schnell blinken zu lassen – genau in einer Frequenz mit 38 kHz. Dies wird als Trägerfrequenz bezeichnet. Der IR-Empfänger ist speziell darauf ausgelegt, nur IR-Licht zu "sehen", das mit dieser Frequenz blinkt.
 
 In `setup()` werden diese Zeilen dafür verwendet:
 
@@ -174,7 +174,7 @@ Wenn die ISR einen vollständigen Schuss empfangen hat, wird dieser Block ausgef
 
 ## Konfiguration & Anpassung
 
-Um das Spiel anzupassen, musst du hauptsächlich die folgenden globalen Variablen am Anfang der Datei ändern:
+Um das Spiel anzupassen, musst man hauptsächlich die folgenden globalen Variablen am Anfang der Datei ändern:
 
 ``` cpp
 // Game data - customize these for your players/teams
