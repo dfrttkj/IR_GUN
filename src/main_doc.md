@@ -50,6 +50,9 @@ Ein weiteres wichtiges Konzept sind **Datentypen**. In C++ muss man den Typ jede
 Dieser Code definiert zuerst drei Konstanten, um die GPIO-Pins des ESP32 zu speichern
 
 ``` cpp
+const int liveLeds[3] = {1, 2, 3};
+const int resetLivePin = 4;
+
 const int irLedPin = 4;      // GPIO für die Sende-LED (Waffe)
 const int irReceiverPin = 5; // GPIO für den Empfänger (Weste)
 const int triggerPin = 15;   // GPIO für den Abzug-Knopf
@@ -57,9 +60,11 @@ const int triggerPin = 15;   // GPIO für den Abzug-Knopf
 
 Die `void setup()`-Funktion definiert wie diese Pins verwendet werden:
 
+- `pinMode(resetLivePin, INPUT_PULLUP);`
 - `pinMode(irLedPin, OUTPUT);`
 - `pinMode(irReceiverPin, INPUT);`
 - `pinMode(triggerPin, INPUT_PULLUP);`
+- `digitalWrite(liveLeds[i], HIGH);`
 
 ## Funktionsweise im Detail
 
@@ -199,3 +204,7 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
   }
 }
 ```
+
+## Lebensystem
+
+Um das 

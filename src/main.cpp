@@ -1,9 +1,12 @@
 #include <Arduino.h>
 
 // Laser Tag Code for ESP32
-const int irLedPin = 4;       // GPIO for the TSAL6200 (Gun)
-const int irReceiverPin = 5;  // GPIO for the TSOP38438 (Vest)
-const int triggerPin = 15;    // GPIO for a trigger button
+const int liveLeds[3] = {1, 2, 3};
+const int resetLivePin = 4;
+
+const int irLedPin = 34;       // GPIO for the TSAL6200 (Gun)
+const int irReceiverPin = 35;  // GPIO for the TSOP38438 (Vest)
+const int triggerPin = 32;     // GPIO for a trigger button
 
 // Variables for IR modulation
 const int carrierFrequency = 38000;   // TSOP38438 is tuned to 38kHz
@@ -154,9 +157,18 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
   
   // Example game logic:
   if (shooterTeam == teamID) {
-    Serial.println("Friendly fire! No damage.");
+    Serial.println("Friendly fire!");
   } else {
-    Serial.println("Enemy hit! -10 health");
+    Serial.println("Enemy hit!");
+  
+    if (liveLeds.lenght() != 0) {
+      digitalWrite(liveLeds[liveLeds.lenght()-1], LOW);
+    }
+
+    if (liveLeds.lenght() == 0) {
+      Serial.println("You've Died");
+    }
+
     // Subtract health, check for elimination, etc.
   }
 }
@@ -164,9 +176,15 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
 void setup() {
   Serial.begin(115200);
   
+  pinMode(resetLivePin, INPUT_PULLUP);
   pinMode(irLedPin, OUTPUT);
   pinMode(triggerPin, INPUT_PULLUP);
   pinMode(irReceiverPin, INPUT);
+
+  // Setup Lives
+  for (int i = 0; i < liveLeds.size(); i++) {
+    digitalWrite(liveLeds[i], HIGH);
+  }
 
   // Configure ESP32 LEDC PWM for 38kHz modulation
   ledcSetup(pwmChannel, carrierFrequency, 8);
