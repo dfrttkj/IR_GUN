@@ -1,6 +1,10 @@
 #include <Arduino.h>
 
 // Laser Tag Code for ESP32
+
+int hp = 3;
+const int hpLeds[3] = {18, 19, 21};
+
 const int irLedPin = 4;       // GPIO for the TSAL6200 (Gun)
 const int irReceiverPin = 5;  // GPIO for the TSOP38438 (Vest)
 const int triggerPin = 15;    // GPIO for a trigger button
@@ -167,6 +171,11 @@ void setup() {
   pinMode(irLedPin, OUTPUT);
   pinMode(triggerPin, INPUT_PULLUP);
   pinMode(irReceiverPin, INPUT);
+
+  for (int pin : hpLeds) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH);
+  }
 
   // Configure ESP32 LEDC PWM for 38kHz modulation
   ledcSetup(pwmChannel, carrierFrequency, 8);
