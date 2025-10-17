@@ -2,10 +2,11 @@
 
 // Laser Tag Code for ESP32
 
+bool debugMode = false;
+
 int hp = 3;
 bool dead = false;
 const int hpLeds[3] = {18, 19, 21};
-
 
 const int irLedPin = 4;       // GPIO for the TSAL6200 (Gun)
 const int irReceiverPin = 5;  // GPIO for the TSOP38438 (Vest)
@@ -163,11 +164,58 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
     Serial.println("Friendly fire!");
   } else {
     if (hp > 0) {
-      Serial.println("Enemy hit! -1 HP!!!!");
-      digitalWrite(hpLeds[--hp], LOW);
+      hp--;
+      Serial.println("Enemy hit! -1 HP! Current HP: " + String(hp));
+      if (hp < 3) {
+        digitalWrite(hpLeds[hp], LOW);
+      }
     }
   }
 }
+
+// /*
+void checkSerialCommands() {
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    command.toLowerCase();
+    
+    if (command == "debug on") {
+      debugMode = true;
+      Serial.println("Debug mode ON");
+    }
+    else if (command == "debug off") {
+      debugMode = false;
+      Serial.println("Debug mode OFF");
+    }
+    else if (command.startsWith("set hp ")) {
+      int newHp = command.substring(7).toInt();
+      if (newHp >= 0) {
+        hp = newHp;
+        Serial.println("HP set to: " + String(hp));
+        if (hp > 0) {
+          dead = false;
+          for (int i = 0; i < ((hp < 3) ? hp : 3); i++) {
+            digitalWrite(hpLeds[i], HIGH);
+          }
+        }
+      } else {
+        Serial.println("Invalid HP value");
+      }
+    }
+    else if (command == "help") {
+      Serial.println("Available commands:");
+      Serial.println("set hp [value] - Set HP to specific value");
+      Serial.println("debug on/off - Toggle debug mode");
+      Serial.println("help - Show this help");
+    }
+    else if (command.length() > 0) {
+      Serial.println("Unknown command: " + command);
+      Serial.println("Type 'help' for available commands");
+    }
+  }
+}
+// */
 
 void setup() {
   Serial.begin(115200);
@@ -227,8 +275,9 @@ void loop() {
   // Check if trigger is pulled
   if (digitalRead(triggerPin) == LOW && hp > 0) {
     sendIRSignal();
-    delay(1000); // Debounce delay
+    delay(100); // Debounce delay
   }
   
   // Add other game logic here (health display, respawning, etc.)
+  checkSerialCommands();
 }
