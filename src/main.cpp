@@ -3,7 +3,9 @@
 // Laser Tag Code for ESP32
 
 int hp = 3;
+bool dead = false;
 const int hpLeds[3] = {18, 19, 21};
+
 
 const int irLedPin = 4;       // GPIO for the TSAL6200 (Gun)
 const int irReceiverPin = 5;  // GPIO for the TSOP38438 (Vest)
@@ -25,7 +27,7 @@ const unsigned long NEC_REPEAT_DELAY = 108000; // 108ms between repeats
 
 // Game data - customize these for your players/teams
 uint16_t playerID = 0x1234;  // 16-bit player ID
-uint8_t teamID = 0x99;       // 8-bit team ID
+uint8_t teamID = 0x01;       // 8-bit team ID
 
 void sendNEC(uint16_t address, uint8_t command) {
   // Calculate command inverse for error checking
@@ -158,10 +160,12 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
   
   // Example game logic:
   if (shooterTeam == teamID) {
-    Serial.println("Friendly fire! No damage.");
+    Serial.println("Friendly fire!");
   } else {
-    Serial.println("Enemy hit! -10 health");
-    // Subtract health, check for elimination, etc.
+    if (hp > 0) {
+      Serial.println("Enemy hit! -1 HP!!!!");
+      digitalWrite(hpLeds[--hp], LOW);
+    }
   }
 }
 
@@ -221,9 +225,9 @@ void loop() {
   }
   
   // Check if trigger is pulled
-  if (digitalRead(triggerPin) == LOW) {
+  if (digitalRead(triggerPin) == LOW && hp > 0) {
     sendIRSignal();
-    delay(100); // Debounce delay
+    delay(1000); // Debounce delay
   }
   
   // Add other game logic here (health display, respawning, etc.)
