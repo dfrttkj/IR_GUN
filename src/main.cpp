@@ -1,17 +1,14 @@
 #include <Arduino.h>
 
 // Laser Tag Code for ESP32
-const int liveLeds[3] = {1, 2, 3};
-const int resetLivePin = 4;
-
-const int irLedPin = 34;       // GPIO for the TSAL6200 (Gun)
-const int irReceiverPin = 35;  // GPIO for the TSOP38438 (Vest)
-const int triggerPin = 32;     // GPIO for a trigger button
+const int irLedPin = 4;       // GPIO for the TSAL6200 (Gun)
+const int irReceiverPin = 5;  // GPIO for the TSOP38438 (Vest)
+const int triggerPin = 15;    // GPIO for a trigger button
 
 // Variables for IR modulation
 const int carrierFrequency = 38000;   // TSOP38438 is tuned to 38kHz
 const int pwmChannel = 0;             // ESP32 has 16 PWM channels (0-15)
-const int cycle = 127;   // cycle default=127 (0-254)
+const int cycle = 64;   // cycle default=127 (0-254) (Best: 64-127)
 
 // NEC protocol timing constants (in microseconds)
 const unsigned long NEC_LEADING_PULSE = 9000;
@@ -24,7 +21,7 @@ const unsigned long NEC_REPEAT_DELAY = 108000; // 108ms between repeats
 
 // Game data - customize these for your players/teams
 uint16_t playerID = 0x1234;  // 16-bit player ID
-uint8_t teamID = 0x01;       // 8-bit team ID
+uint8_t teamID = 0x99;       // 8-bit team ID
 
 void sendNEC(uint16_t address, uint8_t command) {
   // Calculate command inverse for error checking
@@ -157,18 +154,9 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
   
   // Example game logic:
   if (shooterTeam == teamID) {
-    Serial.println("Friendly fire!");
+    Serial.println("Friendly fire! No damage.");
   } else {
-    Serial.println("Enemy hit!");
-  
-    if (liveLeds.lenght() != 0) {
-      digitalWrite(liveLeds[liveLeds.lenght()-1], LOW);
-    }
-
-    if (liveLeds.lenght() == 0) {
-      Serial.println("You've Died");
-    }
-
+    Serial.println("Enemy hit! -10 health");
     // Subtract health, check for elimination, etc.
   }
 }
@@ -176,15 +164,9 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
 void setup() {
   Serial.begin(115200);
   
-  pinMode(resetLivePin, INPUT_PULLUP);
   pinMode(irLedPin, OUTPUT);
   pinMode(triggerPin, INPUT_PULLUP);
   pinMode(irReceiverPin, INPUT);
-
-  // Setup Lives
-  for (int i = 0; i < liveLeds.size(); i++) {
-    digitalWrite(liveLeds[i], HIGH);
-  }
 
   // Configure ESP32 LEDC PWM for 38kHz modulation
   ledcSetup(pwmChannel, carrierFrequency, 8);
