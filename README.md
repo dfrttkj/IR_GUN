@@ -1,14 +1,12 @@
-# Das Gewehr
+# Gauntlet-Tag
 
-Das Projekt "Das Gewehr" wurde ursprünglich von Tobias Moswitzer und John Ramsak initiiert. Später schlossen sich Karl Krumrei und Erik Praster dem Team an. Das Vorhaben wird freundlicherweise von Luca Hofbauer ([Autohaus Hofbauer](https://www.hofbauer.co.at/autohaus)) gesponsert.
-
-Bei "Das Gewehr" handelt es sich um ein selbst entwickeltes Laser-Tag-System. Das Team baut die gesamte Hard- und Software auf Basis der folgenden Kernkomponenten auf:
+Gauntlet-Tag ist ein Projekt das von John Ramsak und Tobias Moswitzer ins Leben gerufen wurde. Dieses Projekt zielt auf die Entwicklung eines funktionsfähigen Laser-Tag Systems mit vollständig implementiertem Front-End, Back-End sowie Hardware von Sender und Empfänger. Weitere Integrale Mitglieder des Teams sind Julian Blümel sowie Luca Hofbauer.
 
 - **Mikrocontroller**: ESP32-WROOM-32 (53.5 mm x 28.5 mm x 13.0 mm)
 
-- **Sender (in der "Waffe")**: TSAL6200 Hochleistungs-Infrarot-Sendedioden
+- **Sender**: TSAL6200 Hochleistungs-Infrarot-Sendedioden
 
-- **Empfänger (an der "Weste")**: TSOP38438 IR-Empfängermodule
+- **Empfänger**: TSOP38438 IR-Empfängermodule
 
 Die passgenauen Gehäuse für die Elektronik werden mithilfe von 3D-Druckern gefertigt, um die Komponenten zu schützen und dem System ein professionelles Aussehen zu verleihen.
 
