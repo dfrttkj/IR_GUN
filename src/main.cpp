@@ -24,7 +24,7 @@ const char* ssid = "ASDF";
 const char* password = "dfrttkj1";
 
 // WebSocket Configuration
-const char* websocket_server = "10.216.215.161";
+const char* websocket_server = " 10.73.85.65";
 constexpr uint16_t websocket_port = 8080;
 const char* websocket_path = "/";
 
@@ -45,7 +45,7 @@ bool lastTriggerState = HIGH;
 // IR Modulation Constants
 const int carrierFrequency = 38000;
 const int pwmChannel = 0;
-const int pwmChannelHP = 1;
+const int pwmChannelHP = 2;
 const int cycle = 64;
 
 // NEC protocol timing
@@ -122,8 +122,20 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
 
                 if (!error) {
                   const char* msgType = doc["type"];
+                  if (strcmp(msgType, "ping") == 0) {
+                    digitalWrite(2, HIGH);
+                    lastPingTime = millis();
+                    {
+                      StaticJsonDocument<256> back;
+                      back["type"] = "pong";
+                      back["pid"] = playerID;
 
-                  if (strcmp(msgType, "gamestart") == 0) {
+                      String output;
+                      serializeJson(back, output);
+                      webSocket.sendTXT(output);
+                      Serial.println("[WS] Sent: " + output);
+                    }
+                  } else if (strcmp(msgType, "startgame") == 0) {
                     handleGameStart(doc);
                   } else if (strcmp(msgType, "endgame") == 0) {
                     handleEndGame();
@@ -139,19 +151,6 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
     }
 }
 
-// --- Periodic Ping ---
-void sendPing() {
-  StaticJsonDocument<128> doc;
-  doc["type"] = "ping";
-
-  String output;
-  serializeJson(doc, output);
-  webSocket.sendTXT(output);
-
-  if (debugMode) {
-    Serial.println("[WS] Ping sent");
-  }
-}
 
 // --- IR Sending Logic ---
 void sendNEC(uint16_t address, uint8_t command) {
@@ -180,6 +179,7 @@ void sendNEC(uint16_t address, uint8_t command) {
   ledcWrite(pwmChannel, cycle);
   delayMicroseconds(NEC_PULSE);
   ledcWrite(pwmChannel, 0);
+
   Serial.println("IR Shot Fired!");
 }
 
@@ -196,44 +196,63 @@ void IRAM_ATTR handleReceivedIR() {
   unsigned long duration = currentTime - lastEdgeTime;
   int state = digitalRead(irReceiverPin);
 
+  // TSOP38438 inverts the signal: LOW = IR detected, HIGH = no IR
+
   if (state == HIGH) {
+    // Rising edge - IR burst ended, this is the start of a space
     lastEdgeTime = currentTime;
     return;
   }
 
+  // Falling edge - space ended, IR burst starting
+  // The duration variable contains the length of the space
+
   if (waitingForStart) {
+    // Looking for the leading space (4.5ms)
     if (duration > 4000 && duration < 5000) {
       waitingForStart = false;
       bitCount = 0;
       receivedData = 0;
     }
   } else {
+    // Receiving data bits
     if (duration > 400 && duration < 800) {
+      // Zero bit (560µs space)
+      receivedData |= (0UL << bitCount);
       bitCount++;
     } else if (duration > 1500 && duration < 1900) {
+      // One bit (1690µs space)
       receivedData |= (1UL << bitCount);
       bitCount++;
-    } else {
+    } else if (duration > 2000 && duration < 2500) {
+      // Repeat code detected
       waitingForStart = true;
+      bitCount = 0;
+    } else {
+      // Invalid timing, reset
+      waitingForStart = true;
+      bitCount = 0;
     }
 
     if (bitCount == 32) {
+      // Complete message received
       lastReceivedData = receivedData;
       messageReady = true;
       waitingForStart = true;
       bitCount = 0;
     }
   }
+
   lastEdgeTime = currentTime;
 }
 
-void processHit(uint16_t shooterID, uint8_t shooterTeam) {
+void processHit(uint16_t shooterPID, uint8_t shooterTID) {
   // Team 0xFF is free-for-all, so hits always count
-  if (shooterTeam != 0xFF && shooterTeam == teamID) {
+  if (shooterPID == playerID || ( shooterTID != 0xFF && shooterTID == teamID )) {
     Serial.println("Friendly fire blocked.");
   } else if (hp > 0) {
     hp--;
-    Serial.printf("Hit by pid: 0x%04X tid: 0x%02X! HP: %d\n", shooterID, shooterTeam, hp);
+    Serial.printf("Hit by pid: 0x%04X tid: 0x%02X! HP: %d\n", shooterPID, shooterTID, hp);
 
     // Update LED gradient
     updateHPLed();
@@ -242,7 +261,7 @@ void processHit(uint16_t shooterID, uint8_t shooterTeam) {
     StaticJsonDocument<200> doc;
     doc["type"] = "hit";
     doc["victim"] = playerID;
-    doc["shooter"] = shooterID;
+    doc["shooter"] = shooterPID;
 
     String output;
     serializeJson(doc, output);
@@ -261,7 +280,7 @@ void checkSerialCommands() {
       MAX_HP = hp;
       updateHPLed();
       Serial.println("HP Updated to " + String(hp));
-    } else if (command == "noWait") {
+    } else if (command == "noS") {
       waitForGameStart = false;
       gameStarted = true;
       withServer = false;
@@ -281,6 +300,7 @@ void checkSerialCommands() {
 void setup() {
   Serial.begin(115200);
 
+  pinMode(2, OUTPUT);
   // Pin Modes
   pinMode(irLedPin, OUTPUT);
   pinMode(triggerPin, INPUT_PULLUP);
@@ -297,41 +317,44 @@ void setup() {
   ledcAttachPin(hpLed, pwmChannelHP);
   updateHPLed();
 
-  // WiFi Setup
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nWiFi Connected. IP: " + WiFi.localIP().toString());
+  if (!debugMode) {
+    // WiFi Setup
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("\nWiFi Connected. IP: " + WiFi.localIP().toString());
 
-  // WebSocket Setup
-  webSocket.begin(websocket_server, websocket_port, websocket_path);
-  webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5000);
+    // WebSocket Setup
+    webSocket.begin(websocket_server, websocket_port, websocket_path);
+    webSocket.onEvent(webSocketEvent);
+    webSocket.setReconnectInterval(5000);
+  }
 
   // IR Interrupt
   attachInterrupt(digitalPinToInterrupt(irReceiverPin), handleReceivedIR, CHANGE);
 
   Serial.println("Laser Tag System Online");
   Serial.println("Waiting for game start...");
-  Serial.println("Type 'noWait' to override");
+  Serial.println("Type 'noS' to override");
 }
 
 void loop() {
-  if (withServer) webSocket.loop();
+  if (withServer && !debugMode) webSocket.loop();
   checkSerialCommands();
+
+  unsigned long currentTime = millis();
+
+  // Periodic Ping
+
+  if (currentTime - lastPingTime >= PING_INTERVAL) {
+    digitalWrite(2, LOW);
+  }
 
   // If waiting for game start, skip main game logic
   if (waitForGameStart && !gameStarted) {
     return;
-  }
-
-  // Periodic Ping
-  unsigned long currentTime = millis();
-  if (currentTime - lastPingTime >= PING_INTERVAL) {
-    sendPing();
-    lastPingTime = currentTime;
   }
 
   // Handle Received Hits
@@ -360,3 +383,5 @@ void loop() {
 
   lastTriggerState = currentTriggerState;
 }
+
+// [WS] Received: {"type":"activeWeapons","weapons":[1,4,2]}
