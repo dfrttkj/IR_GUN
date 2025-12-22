@@ -16,15 +16,15 @@ bool gameStarted = false;
 bool waitForGameStart = true;
 
 // Game data
-uint16_t playerID = 0x0001;
+uint16_t playerID = 0x1000;
 uint8_t teamID = 0x00;
 
 // WiFi Configuration
-const char* ssid = "ASDF";
-const char* password = "dfrttkj1";
+const char* ssid = "IOTIF2";
+const char* password = "ib1sdaif";
 
 // WebSocket Configuration
-const char* websocket_server = " 10.73.85.65";
+const char* websocket_server = "172.25.43.177";
 constexpr uint16_t websocket_port = 8080;
 const char* websocket_path = "/";
 
@@ -84,7 +84,7 @@ void handleEndGame() {
   teamID = 0x00;
   SHOT_COOLDOWN = 0;
   hp = 0;
-  MAX_HP = 0;
+  MAX_HP = 1;
 
   gameStarted = false;
   updateHPLed();
