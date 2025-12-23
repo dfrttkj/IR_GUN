@@ -13,18 +13,17 @@ int MAX_HP = 0;
 // Game State
 bool withServer = true;
 bool gameStarted = false;
-bool waitForGameStart = true;
 
 // Game data
-uint16_t playerID = 0x1000;
+uint16_t playerID = 0x0002;
 uint8_t teamID = 0x00;
 
 // WiFi Configuration
-const char* ssid = "IOTIF2";
-const char* password = "ib1sdaif";
+const char* ssid = "ASDF";
+const char* password = "dfrttkj1";
 
 // WebSocket Configuration
-const char* websocket_server = "172.25.43.177";
+const char* websocket_server = "10.73.85.161";
 constexpr uint16_t websocket_port = 8080;
 const char* websocket_path = "/";
 
@@ -121,7 +120,9 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
                 DeserializationError error = deserializeJson(doc, payload);
 
                 if (!error) {
+                  if (!doc["type"].is<const char*>()) return;
                   const char* msgType = doc["type"];
+
                   if (strcmp(msgType, "ping") == 0) {
                     digitalWrite(2, HIGH);
                     lastPingTime = millis();
@@ -189,7 +190,7 @@ volatile unsigned int bitCount = 0;
 volatile uint32_t receivedData = 0;
 volatile bool messageReady = false;
 volatile bool waitingForStart = true;
-uint32_t lastReceivedData = 0;
+volatile uint32_t lastReceivedData;
 
 void IRAM_ATTR handleReceivedIR() {
   unsigned long currentTime = micros();
@@ -218,7 +219,7 @@ void IRAM_ATTR handleReceivedIR() {
     // Receiving data bits
     if (duration > 400 && duration < 800) {
       // Zero bit (560µs space)
-      receivedData |= (0UL << bitCount);
+      receivedData &= ~(1UL << bitCount);
       bitCount++;
     } else if (duration > 1500 && duration < 1900) {
       // One bit (1690µs space)
@@ -247,8 +248,8 @@ void IRAM_ATTR handleReceivedIR() {
 }
 
 void processHit(uint16_t shooterPID, uint8_t shooterTID) {
-  // Team 0xFF is free-for-all, so hits always count
-  if (shooterPID == playerID || ( shooterTID != 0xFF && shooterTID == teamID )) {
+  if (shooterPID == playerID) return;
+  if (shooterTID != 0xFF && shooterTID == teamID) {
     Serial.println("Friendly fire blocked.");
   } else if (hp > 0) {
     hp--;
@@ -281,7 +282,6 @@ void checkSerialCommands() {
       updateHPLed();
       Serial.println("HP Updated to " + String(hp));
     } else if (command == "noS") {
-      waitForGameStart = false;
       gameStarted = true;
       withServer = false;
 
@@ -353,7 +353,7 @@ void loop() {
   }
 
   // If waiting for game start, skip main game logic
-  if (waitForGameStart && !gameStarted) {
+  if (!gameStarted) {
     return;
   }
 
